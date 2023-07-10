@@ -1,0 +1,22 @@
+{
+  "name": "fakebookindex",
+  "version": "1.0.0",
+  "description": "an electron app that indexes my Fakebook PDFs.",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "github.com/DThompson55/FakeBookIndex.git"
+  },
+  "author": "DThompson55",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^25.2.0"
+  },
+  "dependencies": {
+    "csvtojson": "^2.0.10"
+  }
+}
