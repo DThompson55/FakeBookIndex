@@ -1,8 +1,9 @@
 const electron = require('electron')
 const ipc = electron.ipcRenderer;
 
-window.addEventListener('DOMContentLoaded', () => {
+var synonyms;
 
+window.addEventListener('DOMContentLoaded', () => {
 	var dict = [];
 	var keys = [];
 	var searchLimit = 25;
@@ -19,33 +20,64 @@ window.addEventListener('DOMContentLoaded', () => {
 	books["NEWREAL3"] = {'offset':10};
 	books["REALBK3"]  = {'offset':5};
 	books["CUBANBK1"]  = {'offset':8};
+	books["THEBOOK"]  = {'offset':0};
+	books["STANDARD"]  = {'offset':0};
 
 
 	const songLabel = document.querySelector("#songLabel");
-	console.log(songLabel);
 	songLabel.addEventListener('click', (event) => {
 			const input = document.querySelector('#song_name');
 			input.value = "";
-			updateValues();
+			updateValues(false);
 		}, false); 
 
 
 	function getRealPage(book,page){
 		var index = book.toUpperCase()
 		if ( books[index] ) {
-			console.log((books[index].offset)+parseInt(page));
 			return ((books[index].offset)+parseInt(page));
 		}
 		return page;
 	}
 
-	const updateValues = () => {
+	const updateValues = (exact=false) => {
 		const input = document.querySelector('#song_name');
 
 		var matches = [];
-		for (var i = 0; i < keys.length; i++){
-			if (keys[i].includes((input.value).toUpperCase())){
-				matches.push(dict[keys[i]])
+		var matchMap = [];
+
+		// for (var i = 0; i < keys.length; i++){
+		// 	if (keys[i].includes((input.value).toUpperCase())){
+		// 		console.log("x",keys[i],dict[keys[i]]);
+		// 		matches.push(dict[keys[i]]);
+		// 		count++;
+		// 		if ( count > 10) break;
+		// 	}
+		// }
+
+		if (exact){
+			for (var i = 0; i < keys.length; i++){
+				if (keys[i] === ((input.value).toUpperCase())){
+					matches.push(dict[keys[i]]);
+					break;
+				}
+			}
+		} else {
+			for (var i = 0; i < keys.length; i++){
+				if (keys[i].includes((input.value).toUpperCase())){
+					if (matchMap[keys[i]] === undefined){
+						matches.push(dict[keys[i]]);
+						matchMap[keys[i]] = true;
+					}
+					if (synonyms[keys[i]] !== undefined){
+						synonyms[keys[i]].forEach((key)=>{
+							if (matchMap[key] === undefined){
+								matches.push(dict[key]);
+								matchMap[key] = true;
+							}
+						})
+					}
+				}
 			}
 		} 
 
@@ -106,10 +138,10 @@ window.addEventListener('DOMContentLoaded', () => {
 			c1.innerHTML = (text);
 			c1.setAttribute("class", "tcol_1");
 			c1.addEventListener('click', (event) => {
-				console.log("click 1")
+//				console.log("click 1")
 				const input = document.querySelector('#song_name');
 				input.value = text;
-				updateValues();
+				updateValues(true);
 			}, false);     
 
 			r.appendChild(c1);
@@ -128,11 +160,21 @@ window.addEventListener('DOMContentLoaded', () => {
 		let c2 = document.createElement("span")// class="column">") 
 			c2.innerHTML = (file);
 			c2.setAttribute("class", "tcol");
-			let a1 = document.createElement('a'); 
-				a1.setAttribute('href', "resources/"+file+".PDF#page="+getRealPage(file,page));
-				a1.setAttribute('target', "_blank");
-			a1.appendChild(c2);
-			r.appendChild(a1);
+			if (file.substr(0,1) === "("){
+				c2.addEventListener('click', (event) => {
+					const input = document.querySelector('#song_name');
+					input.value = text;
+					updateValues(true);
+				}, false);
+				r.appendChild(c2);
+			} else	{
+				let a1 = document.createElement('a'); 
+					a1.setAttribute('href', "resources/"+file+".PDF#page="+getRealPage(file,page));
+					a1.setAttribute('target', "_blank");
+				a1.appendChild(c2);
+				r.appendChild(a1);
+
+			}
 
 
 		t.appendChild(r);
@@ -179,7 +221,7 @@ window.addEventListener('DOMContentLoaded', () => {
 					searchLimit = parseInt(s);
 					if (searchLimit > 100) searchLimit = 25;
 				}
-				updateValues();
+				updateValues(false);
 			}
 			}, false);     
 
@@ -189,9 +231,34 @@ window.addEventListener('DOMContentLoaded', () => {
 			if (event.isComposing || event.keyCode === 229) {
 			return;
 			}
-			updateValues();
+			updateValues(false);
 
 		})
 	})
 })
 
+
+ipc.on('load_synonyms', (event, message) => {
+		synonyms = message;
+		console.log(synonyms['BABY']);
+})
+
+function findPotentialMatches(input, list, threshold) {
+  // Create an array to store potential matches
+  const potentialMatches = [];
+
+  // Iterate over each item in the list
+  for (let i = 0; i < list.length; i++) {
+    const listItem = list[i];
+
+    if (listItem == input){ // don't calculate the L-number for the original input value, which is part of the list
+      continue;
+    }
+    
+    if (Math.abs(input.length - listItem.length) > threshold ) continue;
+
+    potentialMatches.push(listItem);
+  }
+  
+  return potentialMatches;
+}
