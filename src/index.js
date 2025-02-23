@@ -1,18 +1,23 @@
-const { app, BrowserWindow } = require('electron')
+const { app, BrowserWindow ,screen } = require('electron')
 const path = require('path');
 const isMac = process.platform === 'darwin'
 const fs = require('fs')
-const getJazzIndex = require('./getJazzIndex.js').getJazzIndex;
+//const getJazzIndex = require('./getJazzIndex.js').getJazzIndex;
+const getJazzIndex = require('./getJsonJazzIndex.js').getJazzIndex;
 const synomyms = require('./resources/synonyms.json');
 
+
 const createWindow = () => {  
-  const mainWindow = new BrowserWindow({
+
+const primaryDisplay = screen.getPrimaryDisplay();
+const { width, height } = primaryDisplay.workAreaSize;
+const mainWindow = new BrowserWindow({
 //    alwaysOnTop: true,
-    width: 1800,
-    height: 800,
+    width: width,
+    height: height,
     webPreferences:{
       preload: path.join(__dirname, 'preload.js'),
-      devTools: true // This will disable dev tools debug
+      devTools: false // This will disable dev tools debug
     }
   });
 
@@ -20,13 +25,14 @@ const createWindow = () => {
   mainWindow.loadFile(path.join(__dirname, 'index.html'));
 
   // Open the DevTools.
-  mainWindow.webContents.openDevTools();
+ //mainWindow.webContents.openDevTools();
+
 
   mainWindow.webContents.on('did-finish-load', ()=>{
     try {
-      const csvPath = path.join(__dirname, 'resources/jazz_index.csv')
-      getJazzIndex(csvPath, (jazzIndex)=>{
-      mainWindow.webContents.send('load_index', JSON.stringify(jazzIndex));
+      const jsonPath = path.join(__dirname, 'resources/merged.json')
+      getJazzIndex(jsonPath, (jazzIndex)=>{
+      mainWindow.webContents.send('load_index', JSON.stringify(jazzIndex,null,2));
       mainWindow.webContents.send('load_synonyms', synomyms);
     })
   } catch(e){console.log(e)}
