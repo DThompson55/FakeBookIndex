@@ -1,15 +1,16 @@
 {
-  "name": "fakebookindex",
+  "name": "fakehelp",
   "version": "1.0.0",
   "description": "an electron app that indexes my Fakebook PDFs.",
   "main": "src/index.js",
   "scripts": {
     "start": "electron .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start2": "electron .",
+    "test": "node src/preload.js"
   },
   "repository": {
     "type": "git",
-    "url": "github.com/DThompson55/FakeBookIndex.git"
+    "url": "github.com/DThompson55/Fakehelp.git"
   },
   "author": "DThompson55",
   "license": "ISC",
